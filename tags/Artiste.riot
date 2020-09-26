@@ -1,0 +1,32 @@
+<artiste class="col-4">
+	<div class="card border-dark mb-3" style="min-height: 400px; max-height: 400px;">
+		<div class="card-header bg-transparent">		
+			<h4 if={props.artist.type == "Person"}>Artist name : {props.artist.name}</h4>
+			<h4 if={props.artist.type == "Group"}>Group name : {props.artist.name}</h4>
+			<h4 if={!props.artist.type}>Artist / Group name : {props.artist.name}</h4>
+		</div>
+		<div class="card-body">
+			<p if={props.artist.type} class="card-text">Type : {props.artist.type}</p>
+			<p if={props.artist.type == "Person" && props.artist.gender} class="card-text">Gender : {props.artist.gender}</p>
+			<h5 if={props.artist.country} class="card-text">Country : {props.artist.country}</h5>
+			<p if={props.artist.disambiguation} class="card-text">Disambiguation : {props.artist.disambiguation}</p>
+		</div>
+		<div class="card-footer">
+			<p>Score : {props.artist.score}</p>
+			<p>ID : {props.artist.id}</p>
+			<button class="btn btn-success" onclick={_submit}>View more</button>
+		</div>
+	</div>
+
+	<script>
+		export default{
+			state:{
+			},
+
+			_submit(e){
+				e.preventDefault();
+				this.props.viewMoreForArtists(this.props.artist.id);
+			}
+		}
+	</script>
+</artiste>

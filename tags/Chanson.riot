@@ -1,0 +1,44 @@
+<chanson class="col-4">
+	<div class="card border-dark mb-3" style="min-height: 400px; max-height: 400px;">
+		<div class="card-header bg-transparent">
+			<h4>Recording title : {props.recording.title}</h4>
+		</div>
+		<div class="card-body">
+			<h5 class="card-text">Artist of this release : </h5>
+			<p><span each={a in props.recording["artist-credit"]}>{a.name}<br /></span></p>
+			<p if={state.minutes != 0 && state.seconds != 0} class="card-text" onclick={_conversion(props.recording.length)}>Length : {state.minutes} minutes {state.seconds} seconds</p>
+			<p if={props.recording.disambiguation} class="card-text">Disambiguation : {props.recording.disambiguation}</p>
+		</div>
+		<div class="card-footer">
+			<p>Score : {props.recording.score}</p>
+			<p>ID : {props.recording.id}</p>
+		</div>
+	</div>
+
+	<script>
+		export default{
+			state:{
+				minutes: 0,
+				seconds: 0
+			},
+
+			_conversion(time){
+				if(time){
+					while(this.state.minutes == 0 && this.state.seconds == 0){
+						time = Math.round(time/1000);
+						seconds = time%60;
+						minutes = (time - seconds)/60;
+						console.log("Minutes = " + minutes + " ; Secondes = " + seconds);		
+						this.state.minutes = minutes;
+						this.state.seconds = seconds;
+						this.update();
+					}
+				}
+			},
+
+			_submit(e){
+				e.preventDefault();
+			}
+		}
+	</script>
+</chanson>

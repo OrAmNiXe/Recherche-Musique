@@ -1,0 +1,32 @@
+<album class="col-4">
+	<div class="card border-dark mb-3" style="min-height: 400px; max-height: 400px;">
+		<div class="card-header bg-transparent">
+			<h4>Release title : {props.release.title}</h4>
+		</div>
+		<div class="card-body">
+			<h5 if={props.release.country} class="card-text">Country : {props.release.country}</h5>
+			<h5 if={props.typeArtist == "Person"} class="card-text">Artist of this release :</h5>
+			<h5 if={props.typeArtist == "Group"} class="card-text">Group of this release :</h5>
+			<h5 if={!props.typeArtist} class="card-text">Artist / Group of this release :</h5>
+			<p><span each={a in props.release["artist-credit"]}>{a.name}<br /></span></p>
+			<p if={props.release.disambiguation} class="card-text">Disambiguation : {props.release.disambiguation}</p>
+		</div>
+		<div class="card-footer">
+			<p>Score : {props.release.score}</p>
+			<p>ID : {props.release.id}</p>
+			<button class="btn btn-success" onclick={_submit}>View more</button>
+		</div>
+	</div>
+
+	<script>
+		export default{
+			state:{
+			},
+
+			_submit(e){
+				e.preventDefault();
+				this.props.viewMoreForReleases(this.props.release.id);
+			}
+		}
+	</script>
+</album>

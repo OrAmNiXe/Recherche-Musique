@@ -1,0 +1,402 @@
+<app>
+	<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+		<div class="collapse navbar-collapse" id="navb">
+			<ul class="navbar-nav mr-auto">
+				<li class="nav-item">
+					<a class="nav-link" href="index.php">Music application</a>
+				</li>
+				<li class="nav-item">
+					<a if={state.searchIsTrue} class="nav-link">Your research is : {state.search}</a>
+					<a if={state.releasesByArtistIsTrue} class="nav-link">You are actually looking for the releases of the artist : {state.tabArtistById[0]}</a>
+					<a if={state.recordingsByReleaseIsTrue} class="nav-link">You are actually looking for the recordings of the release : {state.tabReleaseById[0]}</a>
+				</li>
+			</ul>
+			<form class="form-inline my-2 my-lg-0" onsubmit={_getFilterAndSearch}>
+				<input class="form-control mr-sm-2" type="text" name="recherche" placeholder="Your research ?" autocomplete="off" onkeyup={_autocompletion} list="dataAuto"/>
+				<datalist id="dataAuto"></datalist>
+				<select class="form-control mr-sm-2" id="type" name="type">
+					<option value="artists">Artists/Group</option>
+					<option value="releases">Releases</option>
+					<option value="recordings">Recordings</option>
+				</select>
+				<button class="btn btn-success mr-sm-2">Search</button>
+			</form>
+		</div>
+	</nav>
+
+	<div if={state.searchIsTrue || state.releasesByArtistIsTrue || state.recordingsByReleaseIsTrue} class="jumbotron">
+		<div if={state.searchIsTrue}>
+			<button class="btn btn-success" onclick={_backOnMenu}>Back</button>
+			<br />
+			<br />
+			<h5>Number of results : {state.numberOfResults}</h5>
+			<br />
+			<div if={state.artists}>
+				<h4>Artists/Groups</h4>
+				<br />
+				<div class="row d-flex">
+					<artiste each={a in state.tabArtists} artist={a} viewMoreForArtists={_viewMoreForArtists}></artiste>
+				</div>
+			</div>
+			<div if={state.releases}>
+				<h4>Releases</h4>
+				<br />
+				<div class="row d-flex">
+					<album each={a in state.tabReleases} release={a} viewMoreForReleases={_viewMoreForReleases}></album>
+				</div>
+			</div>
+			<div if={state.recordings}>
+				<h4>Recordings</h4>
+				<br />
+				<div class="row d-flex">
+					<chanson each={a in state.tabRecordings} recording={a}></chanson>
+				</div>
+			</div>
+		</div>
+
+		<div if={state.releasesByArtistIsTrue}>
+			<button class="btn btn-success" onclick={_backOnTheArtists}>Back</button>
+			<br />
+			<br />
+			<h4>Name : {state.tabArtistById[0]}</h4>
+			<p if={state.tabArtistById[2]}>Country : {state.tabArtistById[2]}</p>
+			<p if={state.tabArtistById[3]}>Gender : {state.tabArtistById[3]}</p>
+			<p if={state.tabArtistById[4]}>Disambiguation : {state.tabArtistById[4]}</p>
+			<p>ID : {state.tabArtistById[5]}</p>
+			<hr style="border: 2px solid #000000" />
+			<h4 if={state.tabArtistById[1] == "Person"}>{state.numberOfResults} releases for this artist</h4>
+			<h4 if={state.tabArtistById[1] == "Group"}>{state.numberOfResults} releases for this group</h4>
+			<br />
+			<div class="row d-flex">
+				<album each={a in state.tabReleasesByArtist} release={a} typeArtist={state.tabArtistById[1]} viewMoreForReleases={_viewMoreForReleases}></album>
+			</div>
+		</div>
+
+		<div if={state.recordingsByReleaseIsTrue}>
+			<button class="btn btn-success" onclick={_backOnTheReleases}>Back</button>
+			<br />
+			<br />
+			<h4>Title : {state.tabReleaseById[0]}</h4>
+			<p if={state.tabArtistById[1] == "Person"}>Artist of this release : {state.tabArtistById[0]}</p>
+			<p if={state.tabArtistById[1] == "Group"}>Group of this release : {state.tabArtistById[0]}</p>
+			<p if={state.tabReleaseById[1]}>Country : {state.tabReleaseById[1]}</p>
+			<p if={state.tabReleaseById[2]}>Disambiguation : {state.tabReleaseById[1]}</p>
+			<p>ID : {state.tabReleaseById[3]}</p>			
+			<hr style="border: 2px solid #000000" />
+			<h4>{state.numberOfResults} recordings for this release</h4>
+			<br />
+			<div class="row d-flex">
+				<chanson each={a in state.tabRecordingsByRelease} recording={a} release={state.releaseById}></chanson>
+			</div>
+		</div>
+
+		<div if={state.pagination}>
+			<ul class="pagination pagination-lg justify-content-center">
+				<li class="btn page-item"><a class="page-link" onclick={_goToPreviousPage}>Previous page</a></li>
+				<li class="btn page-item"><a class="page-link">{state.currentPage} / {state.totalNumberOfPages}</a></li>
+				<li class="btn page-item"><a class="page-link" onclick={_goToNextPage}>Next page</a></li>
+			</ul>
+		</div>
+	</div>
+
+	<script>
+		export default{
+			state:{
+				numberOfResults: null,
+				numberOfResultsArtists: null,
+				numberOfResultsReleases: null,
+				numberOfResultsRecordings: null,
+				totalNumberOfPages: null,
+				currentPage: 1,
+				offset: 0,
+
+				search: null,
+				searchAutocompletion: null,
+				filter: null,
+				id: null,
+				idArtist: null,
+				artistById: null,
+				releaseById: null,
+				releasesByArtist: null,
+				recordingsByRelease: null,
+
+				pagination: false,
+				searchIsTrue: false,
+				artists: false,
+				releases: false,
+				recordings: false,
+				releasesByArtistIsTrue: false,
+				recordingsByReleaseIsTrue: false,
+				lookingForReleasesByArtist: false,
+
+				tabAutocompletion: [],
+				tabArtists: [],
+				tabReleases: [],
+				tabRecordings: [],
+				tabArtistById: [],
+				tabReleasesByArtist: [],
+				tabReleaseById: [],
+				tabRecordingsByRelease: []
+			},
+
+			_autocompletion(){
+				this.update({"searchAutocompletion":this.$('input').value});
+				filter = document.getElementById('type').value;
+				console.log("Pour autocomplétion : Recherche = " + this.state.searchAutocompletion + " ; Filtre = " + filter);
+				switch(filter){
+					case 'artists':
+						this.state.tabAutocompletion = [];
+						this.sa.getArtistByName(this.state.searchAutocompletion, 0).then((a)=>{
+							console.log(a);
+							this.state.tabAutocompletion = a.artists;
+							console.log("Tmp = " + this.state.tabAutocompletion);
+							dataAuto.innerHTML = "";
+							for(i = 0; i < this.state.tabAutocompletion.length; i++){
+								console.log("Nom artiste " + i + " pour l'autocomplétion = " + this.state.tabAutocompletion[i].name);
+								element = document.createElement("option");
+								element.value = this.state.tabAutocompletion[i].name;
+								dataAuto.appendChild(element);
+								this.update();
+							}
+						});
+					break;
+					case 'releases':
+						this.state.tabAutocompletion = [];
+						this.sa.getReleaseByName(this.state.searchAutocompletion, 0).then((a)=>{
+							console.log(a);
+							this.state.tabAutocompletion = a.releases;
+							console.log("Tmp = " + this.state.tabAutocompletion);
+							dataAuto.innerHTML = "";
+							for(i = 0; i < this.state.tabAutocompletion.length; i++){
+								console.log("Titre album " + i + " pour l'autocomplétion = " + this.state.tabAutocompletion[i].title);
+								element = document.createElement("option");
+								element.value = this.state.tabAutocompletion[i].title;
+								dataAuto.appendChild(element);
+								this.update();
+							}
+						});
+					break;
+					case 'recordings':
+						this.state.tabAutocompletion = [];
+						this.sa.getRecordingByName(this.state.searchAutocompletion, 0).then((a)=>{
+							console.log(a);
+							this.state.tabAutocompletion = a.recordings;
+							console.log("Tmp = " + this.state.tabAutocompletion);
+							dataAuto.innerHTML = "";
+							for(i = 0; i < this.state.tabAutocompletion.length; i++){
+								console.log("Titre chanson " + i + " pour l'autocomplétion = " + this.state.tabAutocompletion[i].title);
+								element = document.createElement("option");
+								element.value = this.state.tabAutocompletion[i].title;
+								dataAuto.appendChild(element);
+								this.update();
+							}
+						});
+					break;
+					default:
+						console.log("Sorry, we can't do your research with the filter : " + filter);
+				}
+			},
+
+			_getTotalNumberOfPages(){
+				this.update({"totalNumberOfPages": Math.ceil(this.state.numberOfResults/9)});
+				console.log("Nombre de pages = " + this.state.totalNumberOfPages);
+			},
+
+			_goToPreviousPage(){
+				if(this.state.currentPage > 1){
+					this.update({"currentPage": this.state.currentPage - 1});
+					this.update({"offset": this.state.offset - 9});
+				}
+				console.log("Page actuelle = " + this.state.currentPage + " ; offset actuel = " + this.state.offset);
+				this._getResearch();
+			},
+
+			_goToNextPage(){
+				if(this.state.currentPage < this.state.totalNumberOfPages){
+					this.update({"currentPage": this.state.currentPage + 1});
+					this.update({"offset": this.state.offset + 9});
+				}
+				console.log("Page actuelle = " + this.state.currentPage + " ; offset actuel = " + this.state.offset);
+				this._getResearch();
+			},
+
+			_backOnMenu(){
+				this.update({"searchIsTrue": false});
+				this.update({"pagination": false});
+			},
+
+			_backOnTheArtists(){
+				this.update({"searchIsTrue": true});
+				this.update({"releasesByArtistIsTrue": false});
+				this.state.currentPage = 1;
+				this.state.offset = 0;
+				this.state.numberOfResults = this.state.numberOfResultsArtists;
+				this._getTotalNumberOfPages();
+				filter = "artists";
+				this._goToPreviousPage()
+				this.update();
+			},
+
+			_backOnTheReleases(){
+				if(this.state.lookingForReleasesByArtist){
+					this.update({"releasesByArtistIsTrue": true});
+					this.update({"recordingsByReleaseIsTrue": false});
+					this.update({"id": this.state.idArtist});
+					filter = "releasesByArtist";
+				}
+				else{
+					this.update({"searchIsTrue": true});
+					this.update({"recordingsByReleaseIsTrue": false});
+					filter = "releases";
+				}
+				this.state.currentPage = 1;
+				this.state.offset = 0;
+				this.state.numberOfResults = this.state.numberOfResultsReleases;
+				this._getTotalNumberOfPages();
+				this._goToPreviousPage()
+				this.update();
+			},
+
+			_getFilterAndSearch(e){
+				e.preventDefault();
+				this.update({"search":this.$('input').value});
+				this.update({"searchIsTrue": true});
+				this.update({"releasesByArtistIsTrue": false});
+				this.update({"recordingsByReleaseIsTrue": false});
+				this.update({"pagination": true});
+				this.state.currentPage = 1;
+				this.state.offset = 0;
+				filter = document.getElementById('type').value;
+				console.log("Filter = " + filter);
+				this.update();
+				this._getResearch();
+			},
+
+			_viewMoreForArtists(id){
+				console.log("Artist Id = " + id);
+				this.update({"id": id});	
+				this.update({"idArtist": id});
+				this.update({"lookingForReleasesByArtist": true});
+				this.state.currentPage = 1;
+				this.state.offset = 0;
+				filter = "releasesByArtist";
+				console.log("Filter = " + filter);
+				this.update();
+				this._getResearch();
+			},
+
+			_viewMoreForReleases(id){
+				console.log("Release Id = " + id);
+				this.update({"id": id});
+				this.state.currentPage = 1;
+				this.state.offset = 0;
+				filter = "recordingsByRelease";
+				console.log("Filter = " + filter);
+				this.update();
+				this._getResearch();
+			},
+
+			_getResearch(){
+				switch(filter){
+					case 'artists':
+						this.update({"artists": true});
+						this.update({"releases": false});
+						this.update({"recordings": false});
+						this.update({"releasesByArtistIsTrue": false});
+						this.update({"recordingsByReleaseIsTrue": false});
+						this.update({"lookingForReleasesByArtist": false});
+						this.sa.getArtistByName(this.state.search, this.state.offset).then((a)=>{
+							console.log(a);
+							this.state.tabArtists = a.artists;
+							this.state.numberOfResultsArtists = a.count;
+							this.state.numberOfResults = this.state.numberOfResultsArtists;
+							this._getTotalNumberOfPages();
+							this.update();
+						});
+					break;
+					case 'releases':
+						this.update({"artists": false});
+						this.update({"releases": true});
+						this.update({"recordings": false});
+						this.update({"releasesByArtistIsTrue": false});
+						this.update({"recordingsByReleaseIsTrue": false});
+						this.update({"lookingForReleasesByArtist": false});
+						this.sa.getReleaseByName(this.state.search, this.state.offset).then((a)=>{
+							console.log(a);
+							this.state.tabReleases = a.releases;
+							this.state.numberOfResultsReleases = a.count;
+							this.state.numberOfResults = this.state.numberOfResultsReleases;
+							this._getTotalNumberOfPages();
+							this.update();
+						});
+					break;
+					case 'recordings':
+						this.update({"artists": false});
+						this.update({"releases": false});
+						this.update({"recordings": true});
+						this.update({"releasesByArtistIsTrue": false});
+						this.update({"recordingsByReleaseIsTrue": false});
+						this.update({"lookingForReleasesByArtist": false});
+						this.sa.getRecordingByName(this.state.search, this.state.offset).then((a)=>{
+							console.log(a);
+							this.state.tabRecordings = a.recordings;
+							this.state.numberOfResultsRecordings = a.count;
+							this.state.numberOfResults = this.state.numberOfResultsRecordings;
+							this._getTotalNumberOfPages();
+							this.update();
+						});
+					break;
+					case 'releasesByArtist':
+						this.update({"searchIsTrue": false});
+						this.update({"recordingsByReleaseIsTrue": false});
+						this.update({"releasesByArtistIsTrue": true});
+						
+						this.sa.getArtistById(this.state.id).then((a)=>{
+							console.log(JSON.parse(a));
+							this.state.artistById = JSON.parse(a);
+							this.state.tabArtistById[0] = this.state.artistById['name'];
+							this.state.tabArtistById[1] = this.state.artistById['type'];
+							this.state.tabArtistById[2] = this.state.artistById['country'];
+							this.state.tabArtistById[3] = this.state.artistById['gender'];
+							this.state.tabArtistById[4] = this.state.artistById['disambiguation'];
+							this.state.tabArtistById[5] = this.state.artistById['id'];
+							this.update();
+						});
+						this.sa.getReleasesByArtist(this.state.id, this.state.offset).then((a)=>{
+							console.log(a);
+							this.state.tabReleasesByArtist = a.releases;
+							this.state.numberOfResultsReleases = a["release-count"];
+							this.state.numberOfResults = this.state.numberOfResultsReleases;
+							this._getTotalNumberOfPages();
+							this.update();
+						});
+					break;
+					case 'recordingsByRelease':
+						this.update({"searchIsTrue": false});
+						this.update({"recordingsByReleaseIsTrue": true});
+						this.update({"releasesByArtistIsTrue": false});
+						this.sa.getReleaseById(this.state.id).then((a)=>{
+							console.log(JSON.parse(a));
+							this.state.releaseById = JSON.parse(a);
+							this.state.tabReleaseById[0] = this.state.releaseById['title'];
+							this.state.tabReleaseById[1] = this.state.releaseById['country'];
+							this.state.tabReleaseById[2] = this.state.releaseById['disambiguation'];
+							this.state.tabReleaseById[3] = this.state.releaseById['id'];
+							this.update();
+						});
+						this.sa.getRecordingByRelease(this.state.id, this.state.offset).then((a)=>{
+							console.log(a);
+							this.state.tabRecordingsByRelease = a.recordings;
+							this.state.numberOfResultsRecordings = a["recording-count"];
+							this.state.numberOfResults = this.state.numberOfResultsRecordings;
+							this._getTotalNumberOfPages();
+							this.update();
+						});
+					break;
+					default:
+						console.log("Sorry, we can't do your research with the filter : " + filter);
+				}
+			}
+		}
+	</script>
+</app>
